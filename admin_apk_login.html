@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Admin Koperasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Jika sudah login, langsung redirect ke dashboard
+        if (sessionStorage.getItem('admin_token')) {
+            window.location.href = 'admin_apk_dashboard.html';
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .bg-brand-blue { background-color: #2563EB; }
+        .hover\:bg-brand-dark:hover { background-color: #1D4ED8; }
+        .focus\:ring-brand-blue:focus { --tw-ring-color: #2563EB; }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center h-screen">
+
+    <div class="w-full max-w-md">
+        <form id="admin-login-form" class="bg-white shadow-2xl rounded-2xl px-8 pt-10 pb-8 mb-4">
+            <div class="mb-8 text-center">
+                <img src="assets/logogpid.png" alt="Logo Gerbang Pangan" class="w-16 h-16 mx-auto mb-4">
+                <h1 class="text-2xl font-bold text-slate-800">Admin Koperasi Login</h1>
+                <p class="text-slate-500">Panel Manajemen Marketplace</p>
+            </div>
+            <div id="error-message" class="hidden bg-rose-100 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+                <strong class="font-bold">Gagal!</strong>
+                <span class="block sm:inline">Username atau password salah.</span>
+            </div>
+            <div class="mb-4">
+                <label class="block text-slate-700 text-sm font-bold mb-2" for="username">
+                    Username (Email)
+                </label>
+                <input class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-slate-700 leading-tight focus:outline-none focus:ring-2 focus:ring-brand-blue" id="username" type="email" placeholder="admin@koperasi.com" value="admin@koperasi.com">
+            </div>
+            <div class="mb-6">
+                <label class="block text-slate-700 text-sm font-bold mb-2" for="password">
+                    Password
+                </label>
+                <input class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-slate-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-brand-blue" id="password" type="password" placeholder="******************" value="password123">
+            </div>
+            <div class="flex items-center justify-between">
+                <button class="bg-brand-blue hover:bg-brand-dark text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline w-full transition-colors" type="submit">
+                    Masuk
+                </button>
+            </div>
+        </form>
+        <p class="text-center text-slate-500 text-xs">
+            &copy;2025 Gerbang Pangan Indonesia.
+        </p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('admin-login-form');
+            const errorMessage = document.getElementById('error-message');
+            const DB_EXTERNAL_USERS_KEY = 'pemdaExternalUsers';
+
+            // --- PERBAIKAN: Pindahkan inisialisasi data ke halaman login ---
+            // Ini memastikan data admin koperasi default ada sebelum proses login dicoba.
+            function initializeKoperasiAdminData() {
+                // PERBAIKAN FINAL: Hanya inisialisasi array kosong jika belum ada.
+                // Jangan buat user default secara otomatis.
+                const existingUsers = localStorage.getItem(DB_EXTERNAL_USERS_KEY);
+                // PERBAIKAN: Buat user default jika tidak ada atau array kosong, agar login bisa dilakukan.
+                if (!existingUsers || JSON.parse(existingUsers).length === 0) {
+                    const defaultAdmin = [
+                        { name: 'Andi', username: 'admin@koperasi.com', password: 'password123', role: 'Admin Koperasi', entity: 'Koperasi Ampibabo', status: 'Aktif', provinsi: 'SULAWESI TENGAH', kabupaten: 'PARIGI MOUTONG', kecamatan: 'Ampibabo', desa: 'Ampibabo' }
+                    ];
+                    localStorage.setItem(DB_EXTERNAL_USERS_KEY, JSON.stringify(defaultAdmin));
+                }
+            }
+            initializeKoperasiAdminData(); // Jalankan fungsi saat halaman dimuat.
+
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                errorMessage.classList.add('hidden');
+
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                const externalUsers = JSON.parse(localStorage.getItem(DB_EXTERNAL_USERS_KEY)) || [];
+                
+                // Cari user berdasarkan username DAN role 'Admin Koperasi'
+                const adminUser = externalUsers.find(user => user.username === username && user.role === 'Admin Koperasi');
+
+                // PERBAIKAN: Bandingkan password yang diinput dengan password yang tersimpan di objek user
+                if (adminUser && adminUser.status === 'Aktif' && password === adminUser.password) {
+                    const token = 'admin_koperasi_token_' + Date.now();
+                    sessionStorage.setItem('admin_token', token);
+                    // Simpan informasi penting tentang admin yang login
+                    sessionStorage.setItem('loggedInAdminName', adminUser.name);
+                    sessionStorage.setItem('loggedInKoperasi', adminUser.entity); // 'Koperasi Ampibabo'
+                    
+                    window.location.href = 'admin_apk_dashboard.html';
+                } else if (adminUser && adminUser.status !== 'Aktif') {
+                    errorMessage.querySelector('span').textContent = 'Akun Anda tidak aktif.';
+                    errorMessage.classList.remove('hidden');
+                } else {
+                    errorMessage.classList.remove('hidden');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
